@@ -4,13 +4,17 @@ package com.bigpro.mibird
 import android.Manifest
 import android.app.Activity
 import android.app.ProgressDialog
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
+import android.util.Size
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
@@ -45,6 +49,7 @@ class UploadActivity : AppCompatActivity() {
 
     // global variable untuk imagename.
     lateinit var image: Part
+    private lateinit var yourBitmap: Bitmap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +76,7 @@ class UploadActivity : AppCompatActivity() {
             }
 
         }
+
         captureButton = findViewById(R.id.takePict)
         captureButton.setOnClickListener {
             if (checkPersmission()) takePicture() else requestPermission()
@@ -122,8 +128,11 @@ class UploadActivity : AppCompatActivity() {
 
             // mempilkan image yang akan diupload dengan glide ke imgUpload.
             Glide.with(this).load(pickedImg).into(imgUpload)
-
+//            data?.data?.let { uri ->
+//                launchImageCrop(uri)
+//            }
             btnUpload.setOnClickListener {
+
                 val intent = Intent(this, ResultActivity::class.java)
                 intent.putExtra("IMG", pickedImg.toString())
                 startActivity(intent)
@@ -147,6 +156,7 @@ class UploadActivity : AppCompatActivity() {
             Glide.with(this).load(mCurrentPhotoPath).into(imgUpload)
 
             btnUpload.setOnClickListener {
+
                 val intent = Intent(this, ResultActivity::class.java)
                 intent.putExtra("IMG", mCurrentPhotoPath.toString())
                 startActivity(intent)
@@ -164,14 +174,21 @@ class UploadActivity : AppCompatActivity() {
     private fun takePicture() {
 
         val intent: Intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+
         val file: File = createFile()
 
         val uri: Uri = FileProvider.getUriForFile(
+
             this,
             "com.bigpro.mibird.fileprovider",
+
             file
+
         )
+
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+
+
         startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
 
     }
@@ -204,6 +221,8 @@ class UploadActivity : AppCompatActivity() {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                     takePicture()
+
+
                 } else {
                     Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show()
                 }
@@ -211,6 +230,33 @@ class UploadActivity : AppCompatActivity() {
             }
             else -> {
             }
+        }
+    }
+
+    fun resizeBitmap(source: Bitmap, maxLength: Int): Bitmap {
+        try {
+            if (source.height >= source.width) {
+                if (source.height <= maxLength) { // if image height already smaller than the required height
+                    return source
+                }
+
+                val aspectRatio = source.width.toDouble() / source.height.toDouble()
+                val targetWidth = (maxLength * aspectRatio).toInt()
+                val result = Bitmap.createScaledBitmap(source, targetWidth, maxLength, false)
+                return result
+            } else {
+                if (source.width <= maxLength) { // if image width already smaller than the required width
+                    return source
+                }
+
+                val aspectRatio = source.height.toDouble() / source.width.toDouble()
+                val targetHeight = (maxLength * aspectRatio).toInt()
+
+                val result = Bitmap.createScaledBitmap(source, maxLength, targetHeight, false)
+                return result
+            }
+        } catch (e: Exception) {
+            return source
         }
     }
 

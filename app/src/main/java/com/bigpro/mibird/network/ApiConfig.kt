@@ -12,8 +12,8 @@ class ApiConfig{
     companion object {
 
         // base url dari end point.
-        const val BASE_URL = "http://192.168.202.249:5000/"
-        const val IMAGE_URL = BASE_URL+"image/"
+        const val BASE_URL = "http://d132-182-2-38-75.ngrok.io"
+        //const val IMAGE_URL = BASE_URL+"image/"
 
     }
 
